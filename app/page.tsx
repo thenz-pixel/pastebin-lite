@@ -13,16 +13,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  // Toggle Dark Mode
+  // Dark mode toggle
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
-  // ✅ SAFE submit handler (prevents JSON parse errors)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -40,7 +35,6 @@ export default function HomePage() {
         body: JSON.stringify(body),
       });
 
-      // 🔐 Safe response handling
       const text = await res.text();
       const data = text ? JSON.parse(text) : null;
 
@@ -56,11 +50,19 @@ export default function HomePage() {
     }
   }
 
+  function handleCreateNewPaste() {
+    setContent("");
+    setTtl("");
+    setMaxViews("");
+    setResultUrl("");
+    setError("");
+  }
+
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${
+      className={`min-h-screen py-12 px-4 transition-colors ${
         darkMode ? "bg-slate-900" : "bg-gray-50"
-      } py-12 px-4`}
+      }`}
     >
       <div className="max-w-3xl mx-auto">
         {/* Header */}
@@ -83,14 +85,14 @@ export default function HomePage() {
             className={`p-2 rounded-full border ${
               darkMode
                 ? "bg-slate-800 border-slate-700 text-yellow-400"
-                : "bg-white border-gray-200 text-slate-600 shadow-sm"
+                : "bg-white border-gray-200 text-slate-600"
             }`}
           >
-            {darkMode ? "☀️ Light" : "🌙 Dark"}
+            {darkMode ? "☀️" : "🌙"}
           </button>
         </div>
 
-        {/* Result */}
+        {/* Result Section */}
         {resultUrl && (
           <div className="mb-8">
             <div
@@ -109,12 +111,34 @@ export default function HomePage() {
                   Paste Ready
                 </span>
 
-                <button
-                  onClick={() => navigator.clipboard.writeText(resultUrl)}
-                  className="text-xs px-3 py-1 bg-indigo-500 text-white rounded-full"
-                >
-                  Copy Link
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(resultUrl)}
+                    className="text-xs px-3 py-1 bg-indigo-500 text-white rounded-full"
+                  >
+                    Copy
+                  </button>
+
+                  <a
+                    href={resultUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1 bg-emerald-500 text-white rounded-full"
+                  >
+                    Open Paste
+                  </a>
+
+                  <button
+                    onClick={handleCreateNewPaste}
+                    className={`text-xs px-3 py-1 rounded-full border ${
+                      darkMode
+                        ? "border-slate-600 text-slate-300"
+                        : "border-gray-300 text-gray-600"
+                    }`}
+                  >
+                    ➕ New
+                  </button>
+                </div>
               </div>
 
               <input
@@ -127,13 +151,13 @@ export default function HomePage() {
                 }`}
               />
 
-              <p className="text-xs mb-2 opacity-60">PREVIEW:</p>
+              <p className="text-xs mb-2 opacity-60">PREVIEW</p>
               <SyntaxHighlighter
                 language="text"
                 style={darkMode ? oneDark : oneLight}
                 customStyle={{ margin: 0, padding: "1rem", fontSize: "0.875rem" }}
               >
-                {content || "// Your content will appear here"}
+                {content}
               </SyntaxHighlighter>
             </div>
           </div>
@@ -143,7 +167,7 @@ export default function HomePage() {
         {!resultUrl && (
           <form
             onSubmit={handleSubmit}
-            className={`p-8 rounded-2xl shadow-xl border ${
+            className={`p-8 rounded-2xl border shadow-xl ${
               darkMode
                 ? "bg-slate-800 border-slate-700"
                 : "bg-white border-gray-100"
@@ -161,14 +185,19 @@ export default function HomePage() {
               }`}
             />
 
+            {/* TTL + Max Views */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-              <input
-                type="number"
-                placeholder="TTL (seconds)"
+              <select
                 value={ttl}
                 onChange={(e) => setTtl(e.target.value)}
                 className="p-3 rounded-lg border"
-              />
+              >
+                <option value="">No Expiry</option>
+                <option value="3600">1 Hour</option>
+                <option value="86400">1 Day</option>
+                <option value="604800">7 Days</option>
+              </select>
+
               <input
                 type="number"
                 placeholder="Max views"
