@@ -1,40 +1,37 @@
-import { getDb } from "@/lib/mongodb"
-import { nanoid } from "nanoid"
-import { nowMs } from "@/lib/now"
+import { NextRequest, NextResponse } from "next/server";
+import { getDb } from "@/lib/mongodb";
 
-export async function POST(req: Request) {
-  const body = await req.json()
-  const { content, ttl_seconds, max_views } = body
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const { content, ttl_seconds, max_views } = body;
 
-  if (!content || typeof content !== "string") {
-    return Response.json({ error: "Invalid content" }, { status: 400 })
+  if (!content || typeof content !== "string" || content.trim() === "") {
+    return NextResponse.json({ error: "Content is required" }, { status: 400 });
   }
 
-  if (ttl_seconds && ttl_seconds < 1) {
-    return Response.json({ error: "Invalid TTL" }, { status: 400 })
+  if (ttl_seconds && (!Number.isInteger(ttl_seconds) || ttl_seconds < 1)) {
+    return NextResponse.json({ error: "ttl_seconds must be >= 1" }, { status: 400 });
   }
 
-  if (max_views && max_views < 1) {
-    return Response.json({ error: "Invalid max views" }, { status: 400 })
+  if (max_views && (!Number.isInteger(max_views) || max_views < 1)) {
+    return NextResponse.json({ error: "max_views must be >= 1" }, { status: 400 });
   }
 
-  const expiresAt = ttl_seconds
-    ? new Date(nowMs() + ttl_seconds * 1000)
-    : null
+  const db = await getDb();
 
-  const id = nanoid(8)
-  const db = await getDb()
+  const now = new Date();
+  const expiresAt = ttl_seconds ? new Date(now.getTime() + ttl_seconds * 1000) : null;
 
-  await db.collection("pastes").insertOne({
-    _id: id,
+  const result = await db.collection("pastes").insertOne({
     content,
+    createdAt: now,
     expiresAt,
     maxViews: max_views ?? null,
-    viewCount: 0,
-  })
+    views: 0,
+  });
 
-  return Response.json({
-    id,
-    url: `/p/${id}`,
-  })
+  return NextResponse.json({
+    id: result.insertedId.toString(),
+    url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/p/${result.insertedId}`,
+  });
 }

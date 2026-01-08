@@ -1,9 +1,10 @@
 import { headers } from "next/headers"
 
-export function nowMs() {
+export async function nowMs() {
   if (process.env.TEST_MODE === "1") {
-    const h = headers().get("x-test-now-ms")
-    if (h) return Number(h)
+    const h = await headers();       // await the headers
+    const testNow = h.get("x-test-now-ms"); // then get the header
+    if (testNow) return Number(testNow);
   }
-  return Date.now()
+  return Date.now();
 }

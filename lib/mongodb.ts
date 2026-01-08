@@ -1,17 +1,15 @@
-import { MongoClient } from "mongodb"
+import { MongoClient, Db } from "mongodb";
 
-const uri = process.env.MONGODB_URI!
-const client = new MongoClient(uri)
-
-let clientPromise: Promise<MongoClient>
-
-if (!global._mongoClientPromise) {
-  global._mongoClientPromise = client.connect()
-}
-
-clientPromise = global._mongoClientPromise
+let client: MongoClient;
+let db: Db;
 
 export async function getDb() {
-  const client = await clientPromise
-  return client.db()
+  if (db) return db;
+
+  if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is not defined");
+
+  client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+  db = client.db(); // uses default DB from connection string
+  return db;
 }
