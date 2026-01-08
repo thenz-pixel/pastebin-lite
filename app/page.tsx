@@ -5,6 +5,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export default function HomePage() {
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [ttl, setTtl] = useState("");
   const [maxViews, setMaxViews] = useState("");
@@ -24,7 +25,11 @@ export default function HomePage() {
     setResultUrl("");
     setLoading(true);
 
-    const body: any = { content };
+    const body: any = {
+      content,
+      title: title || "Untitled Paste",
+    };
+
     if (ttl) body.ttl_seconds = Number(ttl);
     if (maxViews) body.max_views = Number(maxViews);
 
@@ -51,6 +56,7 @@ export default function HomePage() {
   }
 
   function handleCreateNewPaste() {
+    setTitle("");
     setContent("");
     setTtl("");
     setMaxViews("");
@@ -102,6 +108,16 @@ export default function HomePage() {
                   : "bg-white border-green-200 shadow-lg"
               }`}
             >
+              <div className="mb-2">
+                <h2
+                  className={`text-lg font-semibold ${
+                    darkMode ? "text-white" : "text-slate-800"
+                  }`}
+                >
+                  {title || "Untitled Paste"}
+                </h2>
+              </div>
+
               <div className="flex justify-between items-center mb-4">
                 <span
                   className={`text-sm font-bold uppercase ${
@@ -113,7 +129,9 @@ export default function HomePage() {
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigator.clipboard.writeText(resultUrl)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(resultUrl)
+                    }
                     className="text-xs px-3 py-1 bg-indigo-500 text-white rounded-full"
                   >
                     Copy
@@ -173,6 +191,15 @@ export default function HomePage() {
                 : "bg-white border-gray-100"
             }`}
           >
+            {/* Title */}
+            <input
+              type="text"
+              placeholder="Paste title (optional)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full p-3 mb-4 rounded-lg border text-sm"
+            />
+
             <textarea
               placeholder="Paste your content here..."
               value={content}
@@ -185,7 +212,6 @@ export default function HomePage() {
               }`}
             />
 
-            {/* TTL + Max Views */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
               <select
                 value={ttl}
@@ -218,7 +244,9 @@ export default function HomePage() {
         )}
 
         {error && (
-          <p className="mt-4 text-center text-red-500 font-medium">{error}</p>
+          <p className="mt-4 text-center text-red-500 font-medium">
+            {error}
+          </p>
         )}
       </div>
     </div>
